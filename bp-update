@@ -1,0 +1,126 @@
+#!/bin/bash
+#
+# Copyright (C) 2014 LeMaker Community <support@lemaker.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+TEMP_KERNEL_DIR=/tmp/kernel.tmp
+TEMP_ROOTFS_DIR=/tmp/rootfs.tmp
+
+uSage()
+{
+	echo -e "Usage:"
+	echo -e "\tbp-update [ pi|pro ] [ kernel|rootfs|all ]"
+	echo -e "\nReport bp-update bugs to http://dev.lemaker.org/"
+	echo -e "For more information, Please visit the website at <https://github.com/LeMaker/scripts>"
+	exit
+}
+
+upgradeKernel()
+{
+	if [ -d $TEMP_KERNEL_DIR ];then
+		rm -rf $TEMP_KERNEL_DIR
+	fi
+	echo -e "\033[32mCreate dirctory $TEMP_KERNEL_DIR ...\033[0m"
+	mkdir $TEMP_KERNEL_DIR 
+		
+	echo -e "\033[32mDownload the kernel upgarde packet, Please wait ...\033[0m"
+	echo -e "-----------------------------------------------------------"
+	wget -c  -t 3 https://raw.githubusercontent.com/LeMaker/firmware/master/lastest.tar.bz2 -O $TEMP_KERNEL_DIR/lastest.tar.bz2
+	wget -c  -t 3 https://raw.githubusercontent.com/LeMaker/firmware/master/lastest.tar.bz2.asc -O $TEMP_KERNEL_DIR/lastest.tar.bz2.asc
+	echo -e "-----------------------------------------------------------"
+		
+	echo -e "\033[32mVerifying signature... \033[0m\n"
+	echo -e "-----------------------------------------------------------"
+	gpg --verify $TEMP_KERNEL_DIR/lastest.tar.bz2.asc
+	if [ $? -ne 0 ]; then 
+		echo -e "\n\033[31minvalid signature. exiting!\033[0m"
+		rm -rf $TEMP_KERNEL_DIR
+		exit -1 
+	else 
+		echo -e "\n\033[32msignature okay.\033[0m\n"
+	fi
+	echo -e "-----------------------------------------------------------"
+	
+  tar xf $TEMP_KERNEL_DIR/lastest.tar.bz2 -C $TEMP_KERNEL_DIR #Decompressing file
+	
+	if ! [ -f $TEMP_KERNEL_DIR/bp-kernel-update ];then
+		echo -e "\033[31mUpgrade kernel error and TEMP_KERNEL_DIR/bp-kernel-update is not exist\033[0m"
+		exit -1
+	fi
+	
+	if ! [ -x $TEMP_KERNEL_DIR/bp-kernel-update ];then
+		chmod +x $TEMP_KERNEL_DIR/bp-kernel-update
+	fi
+	
+	$TEMP_KERNEL_DIR/bp-kernel-update $1 $TEMP_KERNEL_DIR
+}
+
+upgradeRootfs()
+{
+	echo -e ""
+}
+
+#----------------------------Start Run------------------------------
+if [ $# -lt 1 ] || [ "$1" != "pi" -a "$1" != "pro" ];then
+	uSage
+fi
+
+if [ "$2" = "all" ];then
+	OPTVAL=1
+elif [ "$2" = "kernel" ];then
+	OPTVAL=2
+elif [ "$2" = "rootfs" ];then
+	OPTVAL=3
+else
+	uSage
+fi
+
+# Clear screen
+clear
+sleep 1
+echo -e "\033[36mWelcome to upgrade the system for BananaPi/BananaPro ... \033[0m"	
+
+# Detect user
+TEMP_USER=`whoami`
+if ! [ "$TEMP_USER" = "root" ];then
+	echo -e "\033[31mPlease use the root account \033[0m"
+	exit -1
+fi
+
+# Create a default GnuPG config
+if ! [ -f /root/.gnupg/gpg.conf ];then
+	echo -e "\033[32mCreate a default GnuPG config...\033[0m"
+	gpg -k
+fi
+
+# Receiving/updating public key
+echo -e "-----------------------------------------------------------"
+echo -e "\033[32mReceiving/updating public key ...\033[0m"
+gpg --recv-keys 65524CFE
+echo -e "-----------------------------------------------------------"
+
+case $OPTVAL in
+	1)
+		upgradeKernel $1
+		upgradeRootfs $1
+	;;
+	2)
+		upgradeKernel $1
+	;; 
+	3)
+		upgradeRootfs $1
+	;;
+esac
