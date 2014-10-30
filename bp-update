@@ -126,13 +126,13 @@ case $OPTVAL in
 	2)
 		upgradeKernel $1
 		if [ $? -eq 0 ];then
-			reboot		
+			reboot
 		fi
 	;; 
 	3)
 		upgradeRootfs $1
 		if [ $? -eq 0 ];then
-			reboot		
+			reboot
 		fi
 	;;
 esac
