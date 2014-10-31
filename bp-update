@@ -25,9 +25,10 @@ uSage()
 	echo -e "\tbp-update [ pi|pro ] [ kernel|rootfs|all ]"
 	echo -e "\nReport bp-update bugs to http://dev.lemaker.org/"
 	echo -e "For more information, Please visit the website at <https://github.com/LeMaker/scripts>"
-	exit
+	exit -1
 }
 
+#Return value 0:upgrade success 1: don't upgrade -1:upgrade failure
 upgradeKernel()
 {
 	if [ -d $TEMP_KERNEL_DIR ];then
@@ -55,6 +56,10 @@ upgradeKernel()
 	echo -e "-----------------------------------------------------------"
 	
   tar xf $TEMP_KERNEL_DIR/linux-lastest.tar.bz2 -C $TEMP_KERNEL_DIR #Decompressing file
+  if [ $? -ne 0 ];then
+  	echo -e "\033[31Failed to decompress $TEMP_KERNEL_DIR/linux-lastest.tar.bz2\033[0m"
+  	exit -1
+  fi
 	
 	if ! [ -f $TEMP_KERNEL_DIR/bp-kernel-update ];then
 		echo -e "\033[31mUpgrade kernel error and TEMP_KERNEL_DIR/bp-kernel-update is not exist\033[0m"
@@ -115,7 +120,7 @@ echo -e "-----------------------------------------------------------"
 case $OPTVAL in
 	1)
 		upgradeKernel $1
-		if [ $? -ne 0 ];then
+		if [ $? -ne 0 ] && [ $? -ne 1 ];then
 			exit -1
 		fi
 		upgradeRootfs $1
