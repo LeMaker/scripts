@@ -39,13 +39,13 @@ upgradeKernel()
 		
 	echo -e "\033[32mDownload the kernel upgarde packet, Please wait ...\033[0m"
 	echo -e "-----------------------------------------------------------"
-	wget -c  -t 3 https://raw.githubusercontent.com/LeMaker/firmware/master/linux-lastest.tar.bz2 -O $TEMP_KERNEL_DIR/linux-lastest.tar.bz2
-	wget -c  -t 3 https://raw.githubusercontent.com/LeMaker/firmware/master/linux-lastest.tar.bz2.asc -O $TEMP_KERNEL_DIR/linux-lastest.tar.bz2.asc
+	wget -c  -t 3 https://raw.githubusercontent.com/LeMaker/firmware/master/linux-latest.tar.bz2 -O $TEMP_KERNEL_DIR/linux-latest.tar.bz2
+	wget -c  -t 3 https://raw.githubusercontent.com/LeMaker/firmware/master/linux-latest.tar.bz2.asc -O $TEMP_KERNEL_DIR/linux-latest.tar.bz2.asc
 	echo -e "-----------------------------------------------------------"
 		
 	echo -e "\033[32mVerifying signature... \033[0m\n"
 	echo -e "-----------------------------------------------------------"
-	gpg --verify $TEMP_KERNEL_DIR/linux-lastest.tar.bz2.asc
+	gpg --verify $TEMP_KERNEL_DIR/linux-latest.tar.bz2.asc
 	if [ $? -ne 0 ]; then 
 		echo -e "\n\033[31minvalid signature. exiting!\033[0m"
 		rm -rf $TEMP_KERNEL_DIR
@@ -55,9 +55,9 @@ upgradeKernel()
 	fi
 	echo -e "-----------------------------------------------------------"
 	
-  tar xf $TEMP_KERNEL_DIR/linux-lastest.tar.bz2 -C $TEMP_KERNEL_DIR #Decompressing file
+  tar xf $TEMP_KERNEL_DIR/linux-latest.tar.bz2 -C $TEMP_KERNEL_DIR #Decompressing file
   if [ $? -ne 0 ];then
-  	echo -e "\033[31Failed to decompress $TEMP_KERNEL_DIR/linux-lastest.tar.bz2\033[0m"
+  	echo -e "\033[31Failed to decompress $TEMP_KERNEL_DIR/linux-latest.tar.bz2\033[0m"
   	exit -1
   fi
 	
