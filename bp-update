@@ -37,7 +37,7 @@ upgradeKernel()
 	echo -e "\033[32mCreate dirctory $TEMP_KERNEL_DIR ...\033[0m"
 	mkdir $TEMP_KERNEL_DIR 
 	
-	type wget > /dev/null 2&>1
+	type wget > /dev/null 2>&1
 	if [ 0 -ne wget ];then
 		echo -e "\033[31mwget command not found, please install the wget package ...\033[0m"
 		exit -1
@@ -111,7 +111,7 @@ if ! [ "$TEMP_USER" = "root" ];then
 fi
 
 # Create a default GnuPG config
-type gpg > /dev/null 2&>1
+type gpg > /dev/null 2>&1
 if [ 0 -ne $? ];then
 	echo -e "\033[31mgpg command not found, please install the gnupg package ...\033[0m"
 	exit -1
