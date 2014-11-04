@@ -36,11 +36,16 @@ upgradeKernel()
 	fi
 	echo -e "\033[32mCreate dirctory $TEMP_KERNEL_DIR ...\033[0m"
 	mkdir $TEMP_KERNEL_DIR 
-		
+	
+	type wget
+	if [ 0 -ne wget ];then
+		echo -e "\033[31mwget command not found, please install the wget package ...\033[0m"
+		exit -1
+	fi
 	echo -e "\033[32mDownload the kernel upgarde packet, Please wait ...\033[0m"
 	echo -e "-----------------------------------------------------------"
-	wget -c  -t 3 https://raw.githubusercontent.com/LeMaker/firmware/master/linux-latest.tar.bz2 -O $TEMP_KERNEL_DIR/linux-latest.tar.bz2
-	wget -c  -t 3 https://raw.githubusercontent.com/LeMaker/firmware/master/linux-latest.tar.bz2.asc -O $TEMP_KERNEL_DIR/linux-latest.tar.bz2.asc
+	wget -c --no-check-certificate -t 3 https://raw.githubusercontent.com/LeMaker/firmware/master/linux-latest.tar.bz2 -O $TEMP_KERNEL_DIR/linux-latest.tar.bz2
+	wget -c --no-check-certificate -t 3 https://raw.githubusercontent.com/LeMaker/firmware/master/linux-latest.tar.bz2.asc -O $TEMP_KERNEL_DIR/linux-latest.tar.bz2.asc
 	echo -e "-----------------------------------------------------------"
 		
 	echo -e "\033[32mVerifying signature... \033[0m\n"
@@ -106,6 +111,12 @@ if ! [ "$TEMP_USER" = "root" ];then
 fi
 
 # Create a default GnuPG config
+type gpg
+if [ 0 -ne $? ];then
+	echo -e "\033[31mgpg command not found, please install the gnupg package ...\033[0m"
+	exit -1
+fi
+
 if ! [ -f /root/.gnupg/gpg.conf ];then
 	echo -e "\033[32mCreate a default GnuPG config...\033[0m"
 	gpg -k
