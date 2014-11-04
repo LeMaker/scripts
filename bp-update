@@ -38,7 +38,7 @@ upgradeKernel()
 	mkdir $TEMP_KERNEL_DIR 
 	
 	type wget > /dev/null 2>&1
-	if [ 0 -ne wget ];then
+	if [ 0 -ne $? ];then
 		echo -e "\033[31mwget command not found, please install the wget package ...\033[0m"
 		exit -1
 	fi
