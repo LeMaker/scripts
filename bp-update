@@ -131,7 +131,7 @@ echo -e "-----------------------------------------------------------"
 case $OPTVAL in
 	1)
 		upgradeKernel $1
-		if [ $1 -ne 0 -a $1 -ne 1 ];then
+		if [ $? -ne 0 -a $? -ne 1 ];then
 			exit -1
 		fi
 		upgradeRootfs $1

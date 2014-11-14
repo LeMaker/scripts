@@ -1,4 +1,5 @@
-This repository contains some scripts which could be run on the LINUX OS of the LeMaker Community, details as follows:
+This repository contains some scripts which could be run on the LINUX OS of the LeMaker Community, but can't compatible with raspbian at present.
+Details as follows:
 
 bp-update: Be used to upgrade the firmware of the linux OS, using method as below
            firstly:
