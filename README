@@ -5,5 +5,5 @@ bp-update: Be used to upgrade the firmware and tools of the linux OS, but curren
            cd /usr/local/bin  && wget --no-check-certificate -c https://raw.githubusercontent.com/LeMaker/scripts/master/bp-update
       secondly:
 	   chmod +x bp-update
-      Thirdly:
+      thirdly:
            bp-update [ pi|pro ] [ kernel|rootfs|all ]
