@@ -1,7 +1,6 @@
 This repository contains some scripts which could be run on the LINUX OS of the LeMaker Community, Details as follows:
 
-bp-update: Be used to upgrade the firmware and tools of the linux OS, but currently only support the kernel firmware upgrade.
-Using method as below
+bp-update: Be used to upgrade the firmware and tools of the linux OS, but currently only support the kernel firmware upgrade.Using method as below
       firstly:
            cd /usr/local/bin  && wget --no-check-certificate -c https://raw.githubusercontent.com/LeMaker/scripts/master/bp-update
       secondly:
