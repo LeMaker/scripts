@@ -1,0 +1,282 @@
+#!/bin/bash
+#
+# Copyright (C) 2014 LeMaker Community <support@lemaker.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+#--------------------------------------------------------------------------------------------------
+TEMP_LEMEDIA_DIR=/tmp/lemedia.tmp
+LATEST_LEMEDIA_VERSION=1.1  #initial value
+CURRENT_LEMEDIA_VERSION=1.0  #initial value
+
+#--------------------------------------------------------------------------------------------------
+Get_LeMedia_Version()
+{
+	if [ -d /allwinner/bpi-settings/version/ ];then	
+	   if [ "`ls -A /allwinner/bpi-settings/version/`" = "" ];then
+	      CURRENT_LEMEDIA_VERSION=1.0
+	   else
+	      CURRENT_LEMEDIA_VERSION=`ls /allwinner/bpi-settings/version/ | sed 's/+//g'`
+	   fi
+	  
+	else
+	   CURRENT_LEMEDIA_VERSION=1.0
+	fi
+
+    LATEST_LEMEDIA_VERSION=`ls $TEMP_LEMEDIA_DIR/allwinner/bpi-settings/version/ | sed 's/+//g'`
+    
+    echo -e "CURRENT_LEMEDIA_VERSION= $CURRENT_LEMEDIA_VERSION"
+    echo -e "LATEST_LEMEDIA_VERSION= $LATEST_LEMEDIA_VERSION"
+}
+
+LeVerCompare()
+{
+	CURRENT_VERSION=`echo $1 | cut -d. -f1`
+	UPGRADE_VERSION=`echo $2 | cut -d. -f1`
+	CURRENT_PATCHLEVEL=`echo $1 | cut -d. -f2`
+	UPGRADE_PATCHLEVEL=`echo $2 | cut -d. -f2`
+
+		
+	if [ "$UPGRADE_VERSION" -gt "$CURRENT_VERSION" ];then
+		return 0
+	elif [ "$UPGRADE_VERSION" -eq "$CURRENT_VERSION" ];then
+		if [ "$UPGRADE_PATCHLEVEL" -gt "$CURRENT_PATCHLEVEL" ];then
+			return 0
+		elif [ "$UPGRADE_PATCHLEVEL" -eq "$CURRENT_PATCHLEVEL" ];then
+		    return 1 
+		else
+			return -1
+		fi
+	else
+		return -1
+	fi
+}
+
+action()
+{
+	echo -e $1 && $1
+	if [ $? -ne 0 ];then
+		echo -e $2
+		exit -1
+	fi
+}
+
+#Return value 0:upgrade success 1: don't upgrade -1:upgrade failure
+upgradeLeMedia()
+{
+	if [ -d $TEMP_LEMEDIA_DIR ];then
+		rm -rf $TEMP_LEMEDIA_DIR
+	fi
+	echo -e "\033[32mCreate dirctory $TEMP_LEMEDIA_DIR ...\033[0m"
+	mkdir -p $TEMP_LEMEDIA_DIR 
+	
+	type wget > /dev/null 2>&1
+	if [ 0 -ne $? ];then
+		echo -e "\033[31mwget command not found, will install the wget package now...\033[0m"
+		#exit -1
+		apt-get install wget
+		sleep 1
+	fi
+	
+	echo -e "\033[32mDownload the LeMedia upgarde packet, Please wait ...\033[0m"
+	echo -e "-----------------------------------------------------------"
+	wget -c --no-check-certificate -t 3 https://raw.githubusercontent.com/LeMaker/firmware/master/lemedia-latest.tgz -O $TEMP_LEMEDIA_DIR/lemedia-latest.tgz
+	wget -c --no-check-certificate -t 3 https://raw.githubusercontent.com/LeMaker/firmware/master/lemedia-latest.tgz.asc -O $TEMP_LEMEDIA_DIR/lemedia-latest.tgz.asc
+	echo -e "-----------------------------------------------------------"
+		
+	echo -e "\033[32mVerifying signature... \033[0m\n"
+	echo -e "-----------------------------------------------------------"
+	gpg --verify $TEMP_LEMEDIA_DIR/lemedia-latest.tgz.asc
+	if [ $? -ne 0 ]; then 
+		echo -e "\n\033[31minvalid signature. exiting!\033[0m"
+		rm -rf $TEMP_LEMEDIA_DIR
+		exit -1 
+	else 
+		echo -e "\n\033[32msignature okay.\033[0m\n"
+	fi
+	echo -e "-----------------------------------------------------------"
+	
+  tar xvzf $TEMP_LEMEDIA_DIR/lemedia-latest.tgz -C $TEMP_LEMEDIA_DIR #Decompressing file
+  if [ $? -ne 0 ];then
+  	echo -e "\033[31Failed to decompress $$TEMP_LEMEDIA_DIR/lemedia-latest.tgz\033[0m"
+  	exit -1
+  fi
+  
+  #--------------------------------------------------------------
+  Get_LeMedia_Version
+  LeVerCompare $CURRENT_LEMEDIA_VERSION $LATEST_LEMEDIA_VERSION
+  
+	case $? in 
+	'0')
+	    clear
+		echo -e "\033[32mUpdate the LeMedia ...\033[0m"
+		#---------------------------------------------------------------------------------------------
+		cd ~
+		umount /mnt
+		sleep 1
+		action  "mount /dev/mmcblk0p1 /mnt"    "\033[31mFailed to mount the /dev/mmcblk0p1\033[0m"
+		
+		echo -e "\033[32m 1.Update the file uEnv.txt and script.bin ...\033[0m"
+		action  "rm -rf /mnt/uEnv.txt script.bin"    "\033[31mFailed to remove the file uEnv.txt and script.bin\033[0m"
+		action  "cp -f $TEMP_LEMEDIA_DIR/uEnv.txt /mnt/uEnv.txt"    "\033[31mFailed to copy the uEnv.txt\033[0m"
+		action  "cp -f $TEMP_LEMEDIA_DIR/script.bin /mnt/script.bin"    "\033[31mFailed to copy the script.bin\033[0m"
+		action  "sync"    "\033[31mFailed to sync\033[0m"
+		action  "umount /mnt"  "\033[31mFailed to umount /mnt\033[0m"
+		sleep 1
+        #---------------------------------------------------------------------------------------------
+		echo -e "\033[32m 2.Update the /root/.profile ...\033[0m"
+		action  "cp -f $TEMP_LEMEDIA_DIR/root/profile /root/.profile"    "\033[31mFailed to copy the .profile\033[0m"
+		#---------------------------------------------------------------------------------------------
+		echo -e "\033[32m 3.Update the /etc/modules ...\033[0m"
+		action  "cp -rf $TEMP_LEMEDIA_DIR/etc/modules /etc/modules"    "\033[31mFailed to copy the file modules\033[0m"
+		#---------------------------------------------------------------------------------------------
+		echo -e "\033[32m 4.Update the audio output device setting ...\033[0m"
+		action  "cp -rf $TEMP_LEMEDIA_DIR/allwinner/bpi-settings /allwinner/"    "\033[31mFailed to copy bpi-settings\033[0m"
+		action  "cp -rf $TEMP_LEMEDIA_DIR/usr/bin/* /usr/bin/"    "\033[31mFailed to copy bin files\033[0m"
+		chmod +x /usr/bin/xbmc-audio-hdmi
+		chmod +x /usr/bin/xbmc-audio-jack
+		apt-get install alsa alsa-base alsa-utils
+		#---------------------------------------------------------------------------------------------
+		echo -e "\033[32m 5.Update the wireless network ...\033[0m"
+		echo -e "-----------------------------------------------------------"
+        echo -e "\033[32m now,will install firmware-linux-free...\033[0m"
+		apt-get install firmware-linux-free
+		echo -e "-----------------------------------------------------------"
+        echo -e "\033[32m now,will install dhcpcd...\033[0m"
+		apt-get install dhcpcd
+                echo -e "\033[32m now,will install wireless-tools...\033[0m"
+                apt-get install wireless-tools
+	
+                echo -e "\033[32m Decompressing the packages for installing wpa_supplicant...\033[0m"
+		tar xvzf $TEMP_LEMEDIA_DIR/wpa.tgz -C $TEMP_LEMEDIA_DIR #Decompressing file
+		if [ $? -ne 0 ];then
+		    echo -e "\033[31Failed to decompress $$TEMP_LEMEDIA_DIR/wpa.tgz\033[0m"
+			exit -1
+		fi
+		echo -e "-----------------------------------------------------------"
+		echo -e "\033[32m Make and install libnl...\033[0m"
+        chmod +x $TEMP_LEMEDIA_DIR/wpa/libnl-1.1/configure
+        cd  $TEMP_LEMEDIA_DIR/wpa/libnl-1.1/
+        ./configure
+        cd ~
+        make -C $TEMP_LEMEDIA_DIR/wpa/libnl-1.1/
+        if [ 0 -ne $? ];then
+			echo -e "\033[31libnl make failed,please check the log...\033[0m"
+			exit -1
+		fi
+        make install -C $TEMP_LEMEDIA_DIR/wpa/libnl-1.1/
+        
+        echo -e "-----------------------------------------------------------"
+        echo -e "\033[32m Make and install openssl...\033[0m"
+        make -C $TEMP_LEMEDIA_DIR/wpa/openssl-1.0.1c/
+        if [ 0 -ne $? ];then
+			echo -e "\033[31openssl make failed,please check the log...\033[0m"
+			exit -1
+		fi
+		make install -C $TEMP_LEMEDIA_DIR/wpa/openssl-1.0.1c/
+		
+		echo -e "-----------------------------------------------------------"
+		echo -e "\033[32m Make and install wpa_supplicant...\033[0m"
+        make -C $TEMP_LEMEDIA_DIR/wpa/wpa_supplicant-2.3/wpa_supplicant/
+        if [ 0 -ne $? ];then
+			echo -e "\033[31wpa_supplicant make failed,please check the log...\033[0m"
+			exit -1
+		fi
+		make install -C $TEMP_LEMEDIA_DIR/wpa/wpa_supplicant-2.3/wpa_supplicant/
+		
+		echo -e "Now, configure the wpa..."	
+		action  "cp -rf $TEMP_LEMEDIA_DIR/etc/wpa_supplicant/ /etc/"    "\033[31mFailed to copy the file wpa_supplicant.conf\033[0m"
+		action  "cp -f $TEMP_LEMEDIA_DIR/etc/network/interfaces /etc/network/"    "\033[31mFailed to copy the file interfaces\033[0m"
+		action  "rm -rf /etc/udev/rules.d/70-persistant-net.rules"    "\033[31mFailed to remove the file 70-persistant-net.rules\033[0m"
+		
+		
+		echo -e "----------------------------------------------------------->>>>>>"
+	    echo -e "\033[31*******LeMedia is updated to version $LATEST_LEMEDIA_VERSION , Please check and enjoy it:):) ********\033[0m"
+	    echo -e "<<<<<<<-----------------------------------------------------------"
+	    
+		rm -rf $TEMP_LEMEDIA_DIR
+        exit 0
+	;;
+
+	'1')
+		echo -e "\033[32mThe LeMedia is the latest, don't need to upgrade\033[0m"
+		rm -rf $TEMP_LEMEDIA_DIR
+		exit 1
+	;;
+
+	*)
+		echo -e "\033[31mThe LeMedia upgrade error and $LATEST_LEMEDIA_VERSION < $CURRENT_LEMEDIA_VERSION\033[0m"
+		rm -rf $TEMP_LEMEDIA_DIR
+		exit -1
+	esac
+	#;;
+   
+}
+
+
+
+
+
+
+
+#----------------------------Start Run------------------------------
+# Clear screen
+clear
+sleep 1
+echo -e "\033[36mWelcome to upgrade the LeMedia for BananaPi/BananaPro ... \033[0m"	
+
+# Detect user
+TEMP_USER=`whoami`
+if ! [ "$TEMP_USER" = "root" ];then
+	echo -e "\033[31mPlease use the root account \033[0m"
+	exit -1
+fi
+
+# Make sure the BananaPi/Pro links to the network.
+echo -e "\033[31mPlease make sure the BananaPi/Pro links to the network!!! \033[0m"
+
+#update the system date
+echo -e "-----------------------------------------------------------"
+echo -e "\033[32m Update the system date ...\033[0m"
+ntpdate ntp1.nl.net
+if [ 0 -ne $? ];then
+	echo -e "\033[31 ntpdate failed ,there may be some issues due to the wrong time!!!!\033[0m"
+	sleep 2
+fi
+echo -e "-----------------------------------------------------------"
+
+# Create a default GnuPG config
+type gpg > /dev/null 2>&1
+if [ 0 -ne $? ];then
+	echo -e "\033[31mgpg command not found, will install the gnupg package now...\033[0m"
+	#exit -1
+	apt-get install gnupg
+	sleep 3
+fi
+
+if ! [ -f /root/.gnupg/gpg.conf ];then
+	echo -e "\033[32mCreate a default GnuPG config...\033[0m"
+	gpg -k
+fi
+
+# Receiving/updating public key
+echo -e "-----------------------------------------------------------"
+echo -e "\033[32mReceiving/updating public key ...\033[0m"
+gpg --recv-keys 077E8FE9
+echo -e "-----------------------------------------------------------"
+
+upgradeLeMedia
+
+# The script end.
