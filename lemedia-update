@@ -202,9 +202,9 @@ upgradeLeMedia()
 		action  "rm -rf /etc/udev/rules.d/70-persistant-net.rules"    "\033[31mFailed to remove the file 70-persistant-net.rules\033[0m"
 		
 		
-		echo -e "----------------------------------------------------------->>>>>>"
-	    echo -e "\033[31*******LeMedia is updated to version $LATEST_LEMEDIA_VERSION , Please check and enjoy it:):) ********\033[0m"
-	    echo -e "<<<<<<<-----------------------------------------------------------"
+		echo -e "\033[31m----------------------------------------------------------->>>>>>\033[0m"
+	    echo -e "\033[31m*******LeMedia is updated to version $LATEST_LEMEDIA_VERSION , Please check and enjoy it:):) ********\033[0m"
+	    echo -e "\033[31m<<<<<<<-----------------------------------------------------------\033[0m"
 	    
 		rm -rf $TEMP_LEMEDIA_DIR
         exit 0
