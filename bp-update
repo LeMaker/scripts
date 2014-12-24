@@ -23,7 +23,7 @@ uSage()
 {
 	echo -e "Usage:"
 	echo -e "\tbp-update [ pi|pro ] [ kernel|rootfs|all ]"
-	echo -e "\nReport bp-update bugs to http://dev.lemaker.org/"
+	echo -e "\nReport bp-update bugs to http://bugs.lemaker.org/"
 	echo -e "For more information, Please visit the website at <https://github.com/LeMaker/scripts>"
 	exit -1
 }
