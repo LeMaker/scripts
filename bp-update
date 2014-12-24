@@ -18,9 +18,11 @@
 
 TEMP_KERNEL_DIR=/tmp/kernel.tmp
 TEMP_ROOTFS_DIR=/tmp/rootfs.tmp
+VERSION="v1.0.0"
 
 uSage()
 {
+	echo -e "bp-update: $VERSION\n"
 	echo -e "Usage:"
 	echo -e "\tbp-update [ pi|pro ] [ kernel|rootfs|all ]"
 	echo -e "\nReport bp-update bugs to http://bugs.lemaker.org/"
