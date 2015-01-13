@@ -77,7 +77,8 @@ upgradeKernel()
 		chmod +x $TEMP_KERNEL_DIR/bp-kernel-update
 	fi
 	
-	$TEMP_KERNEL_DIR/bp-kernel-update $1 $TEMP_KERNEL_DIR
+	$TEMP_KERNEL_DIR/bp-kernel-update $1 $TEMP_KERNEL_DIR && \
+		rm -rf $TEMP_KERNEL_DIR
 }
 
 upgradeRootfs()
